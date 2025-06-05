@@ -1,0 +1,92 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sd_xl_base_1.0.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "{reference_image_path}"
+    }
+  },
+  "3": {
+    "class_type": "IPAdapterModelLoader",
+    "inputs": {
+      "ipadapter_file": "ip-adapter-plus_sdxl_vit-h.safetensors"
+    }
+  },
+  "4": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+      "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "IPAdapterApply",
+    "inputs": {
+      "weight": 0.85,
+      "noise": 0.0,
+      "weight_type": "original",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "model": ["1", 0],
+      "ipadapter": ["3", 0],
+      "image": ["2", 0],
+      "clip_vision": ["4", 0]
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["1", 1],
+      "text": "{character_prompt}, matching the reference face, highly detailed, professional photography, 8k resolution, masterpiece quality"
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["1", 1],
+      "text": "low quality, worst quality, blurry, out of focus, distorted, deformed, ugly, bad anatomy, wrong anatomy, different face, wrong face, extra limbs, missing limbs, bad hands, bad fingers, watermark, signature, text"
+    }
+  },
+  "8": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "batch_size": 1,
+      "height": 1024,
+      "width": 1024
+    }
+  },
+  "9": {
+    "class_type": "KSampler",
+    "inputs": {
+      "cfg": 7.5,
+      "denoise": 0.8,
+      "seed": 42,
+      "steps": 25,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "latent_image": ["8", 0],
+      "model": ["5", 0],
+      "positive": ["6", 0],
+      "negative": ["7", 0]
+    }
+  },
+  "10": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["9", 0],
+      "vae": ["1", 2]
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "face_matched_character",
+      "images": ["10", 0]
+    }
+  }
+}
